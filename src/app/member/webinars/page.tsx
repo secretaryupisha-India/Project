@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Monitor, Loader2, Clock, User, Calendar, ExternalLink, CheckCircle2, XCircle, Clock3, Users, BadgeCheck, CreditCard } from 'lucide-react'
 import Link from 'next/link'
+import { isWebinarPast } from '@/lib/webinar-status'
 
 interface WebinarItem {
   id: string
@@ -111,10 +112,16 @@ export default function MemberWebinarsPage() {
             {webinars.map((webinar) => {
               const count = webinar.registrationCount ?? 0
               const isFull = webinar.maxAttendees ? count >= webinar.maxAttendees : false
+              const isPast = isWebinarPast(webinar.date)
               return (
                 <Card key={webinar.id} className="dark:bg-gray-800 dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="text-upisha-navy dark:text-white">{webinar.title}</CardTitle>
+                    {isPast && (
+                      <Badge variant="outline" className="text-xs border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                        Registration Closed
+                      </Badge>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -139,11 +146,17 @@ export default function MemberWebinarsPage() {
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{webinar.description}</p>
                     )}
                     <div className="flex flex-wrap gap-2 mt-3">
-                      <Link href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}>
-                        <Button size="sm" className="bg-upisha-teal hover:bg-upisha-teal-dark text-white" disabled={isFull}>
-                          {isFull ? 'Full' : webinar.type === 'free' ? 'Register Free' : 'Register'}
-                        </Button>
-                      </Link>
+                      {isPast ? (
+                        <Badge variant="outline" className="text-xs border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                          Registration Closed
+                        </Badge>
+                      ) : (
+                        <Link href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}>
+                          <Button size="sm" className="bg-upisha-teal hover:bg-upisha-teal-dark text-white" disabled={isFull}>
+                            {isFull ? 'Full' : webinar.type === 'free' ? 'Register Free' : 'Register'}
+                          </Button>
+                        </Link>
+                      )}
                       {webinar.type === 'free' && webinar.meetingLink && (
                         <a href={webinar.meetingLink} target="_blank" rel="noopener noreferrer">
                           <Button size="sm" variant="outline" className="border-green-500 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300">

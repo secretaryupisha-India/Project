@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { AnimatedSection } from '@/components/sections'
 import type { Webinar } from '@/lib/types'
+import { isWebinarPast } from '@/lib/webinar-status'
 
 export default function WebinarsPage() {
   const [webinars, setWebinars] = useState<Webinar[]>([])
@@ -84,7 +85,9 @@ export default function WebinarsPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {webinars.map((webinar, index) => (
+            {webinars.map((webinar, index) => {
+              const isPast = isWebinarPast(webinar.date)
+              return (
               <motion.div
                 key={webinar.id || index}
                 initial={{ opacity: 0, y: 20 }}
@@ -98,6 +101,11 @@ export default function WebinarsPage() {
                         <CardTitle className="text-lg text-upisha-navy dark:text-white">
                           {webinar.title}
                         </CardTitle>
+                        {isPast && (
+                          <Badge className="shrink-0 text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                            Registration Closed
+                          </Badge>
+                        )}
                         {webinar.type === 'free' ? (
                           <Badge className="shrink-0 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
                             <BadgeCheck className="h-3 w-3 mr-1" />
@@ -143,24 +151,34 @@ export default function WebinarsPage() {
                     )}
                   </CardContent>
                   <CardFooter className="pt-2">
-                    <Link
-                      href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}
-                      className="w-full"
-                    >
+                    {isPast ? (
                       <Button
-                        className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal"
-                        disabled={webinar.maxAttendees ? (webinar.registrationCount ?? 0) >= webinar.maxAttendees : false}
+                        className="w-full bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                        disabled
                       >
-                        {webinar.maxAttendees && (webinar.registrationCount ?? 0) >= webinar.maxAttendees
-                          ? 'Full'
-                          : webinar.type === 'free' ? 'Register Free' : 'Register Now'}
-                        <ArrowRight className="h-4 w-4 ml-2" />
+                        Registration Closed
                       </Button>
-                    </Link>
+                    ) : (
+                      <Link
+                        href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}
+                        className="w-full"
+                      >
+                        <Button
+                          className="w-full bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal"
+                          disabled={webinar.maxAttendees ? (webinar.registrationCount ?? 0) >= webinar.maxAttendees : false}
+                        >
+                          {webinar.maxAttendees && (webinar.registrationCount ?? 0) >= webinar.maxAttendees
+                            ? 'Full'
+                            : webinar.type === 'free' ? 'Register Free' : 'Register Now'}
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </Link>
+                    )}
                   </CardFooter>
                 </Card>
               </motion.div>
-            ))}
+              )
+            })}
           </div>
         )}
 

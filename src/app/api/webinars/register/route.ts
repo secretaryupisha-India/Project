@@ -9,6 +9,7 @@ import {
 import { webinarRegistrationSchema } from '@/lib/validations'
 import { withSecurityHeaders, sanitizeHtml, rateLimit, resetRateLimit, withCsrfProtection, withAppCheckProtection } from '@/lib/security'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { isWebinarPast } from '@/lib/webinar-status'
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +46,22 @@ export async function POST(request: NextRequest) {
 
     // Capacity check: enforce maxAttendees if set
     const webinar = await getWebinarById(validated.webinarId)
-    if (webinar?.maxAttendees && webinar.maxAttendees > 0) {
+    if (!webinar) {
+      return withSecurityHeaders(NextResponse.json(
+        { error: 'Webinar not found.' },
+        { status: 404 }
+      ))
+    }
+
+    // Registration closes once the webinar date has passed (end of that day)
+    if (isWebinarPast(webinar.date)) {
+      return withSecurityHeaders(NextResponse.json(
+        { error: 'Registration is closed: this webinar has already taken place.' },
+        { status: 409 }
+      ))
+    }
+
+    if (webinar.maxAttendees && webinar.maxAttendees > 0) {
       const count = await getWebinarRegistrationCount(validated.webinarId)
       if (count >= webinar.maxAttendees) {
         return withSecurityHeaders(NextResponse.json(

@@ -46,6 +46,13 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
+  // Maintenance/utility scripts are plain CommonJS Node scripts — they
+  // intentionally use require() and don't run through the Next.js bundler.
+  files: ["scripts/**/*.js"],
+  rules: {
+    "@typescript-eslint/no-require-imports": "off",
+  },
+}, {
   ignores: [
     "node_modules/**",
     ".next/**",

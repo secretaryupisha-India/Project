@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import type { Webinar } from '@/lib/types'
+import { isWebinarPast } from '@/lib/webinar-status'
 
 /* ─── Webinars Section ─── */
 interface WebinarsSectionProps {
@@ -111,7 +112,9 @@ export function WebinarsSection({ initialWebinars }: WebinarsSectionProps = {}) 
                 <p className="text-gray-500">No upcoming webinars at this time.</p>
               </div>
             ) : (
-              webinars.map((webinar, i) => (
+              webinars.map((webinar, i) => {
+                const isPast = isWebinarPast(webinar.date)
+                return (
                 <motion.div
                   key={webinar.id || i}
                   initial={{ opacity: 0, x: 20 }}
@@ -156,22 +159,29 @@ export function WebinarsSection({ initialWebinars }: WebinarsSectionProps = {}) 
                             )}
                           </div>
                         </div>
-                        <Link
-                          href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}
-                        >
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="shrink-0 border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+                        {isPast ? (
+                          <Badge variant="outline" className="shrink-0 text-xs border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                            Registration Closed
+                          </Badge>
+                        ) : (
+                          <Link
+                            href={`/webinars/register?webinarId=${webinar.id || ''}&webinarTitle=${encodeURIComponent(webinar.title)}`}
                           >
-                            {webinar.type === 'free' ? 'Register Free' : 'Register'}
-                          </Button>
-                        </Link>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="shrink-0 border-upisha-teal text-upisha-teal hover:bg-upisha-teal hover:text-white"
+                            >
+                              {webinar.type === 'free' ? 'Register Free' : 'Register'}
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                 </motion.div>
-              ))
+                )
+              })
             )}
           </div>
         </div>

@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AnimatedSection } from '@/components/sections'
 import { csrfHeaders } from '@/lib/csrf'
 import type { Webinar } from '@/lib/types'
+import { isWebinarPast } from '@/lib/webinar-status'
 
 export default function WebinarRegisterPage() {
   const searchParams = useSearchParams()
@@ -75,6 +76,7 @@ export default function WebinarRegisterPage() {
   }, [formData.webinarId, webinars])
 
   const isFree = selectedWebinar?.type === 'free'
+  const selectedWebinarPast = selectedWebinar ? isWebinarPast(selectedWebinar.date) : false
 
   const errors: Record<string, string> = {}
   if (touched.fullName && formData.fullName.trim().length < 2) errors.fullName = 'Name must be at least 2 characters'
@@ -180,6 +182,10 @@ export default function WebinarRegisterPage() {
     e.preventDefault()
     if (!formData.webinarId) {
       toast({ title: 'Webinar selection required', description: 'Please select a webinar to register for.', variant: 'destructive' })
+      return
+    }
+    if (selectedWebinarPast) {
+      toast({ title: 'Registration closed', description: 'This webinar has already taken place, so registration is closed.', variant: 'destructive' })
       return
     }
     if (!formData.declaration) {
@@ -385,9 +391,9 @@ export default function WebinarRegisterPage() {
                         <SelectItem value="none" disabled>No webinars available</SelectItem>
                       )}
                       {webinars.map((webinar) => (
-                        <SelectItem key={webinar.id || webinar.title} value={webinar.id || ''}>
+                        <SelectItem key={webinar.id || webinar.title} value={webinar.id || ''} disabled={isWebinarPast(webinar.date)}>
                           <div className="flex flex-col">
-                            <span>{webinar.title}</span>
+                            <span>{webinar.title}{isWebinarPast(webinar.date) ? ' (Registration Closed)' : ''}</span>
                             <span className="text-xs text-gray-400">{webinar.date} • {webinar.time}</span>
                           </div>
                         </SelectItem>
@@ -411,6 +417,12 @@ export default function WebinarRegisterPage() {
                     <div className="mt-2 p-2 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2">
                       <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                       <span>You have already registered for this webinar. Please check your registrations for the status.</span>
+                    </div>
+                  )}
+                  {selectedWebinarPast && (
+                    <div className="mt-2 p-2 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                      <span>Registration is closed: this webinar has already taken place.</span>
                     </div>
                   )}
                 </div>
@@ -531,7 +543,7 @@ export default function WebinarRegisterPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button type="submit" className="flex-1 bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal" disabled={isSubmitting}>
+                  <Button type="submit" className="flex-1 bg-upisha-teal hover:bg-upisha-teal-dark text-white glow-teal" disabled={isSubmitting || selectedWebinarPast}>
                     {isSubmitting ? (
                       <><span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />Submitting...</>
                     ) : (
